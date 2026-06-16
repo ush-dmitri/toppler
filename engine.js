@@ -99,7 +99,7 @@ function initLoop() {
             }
             if (blinkState.visible) {
                 ctx.fillStyle = '#ffffff';
-                ctx.font = '32px "PxPlus IBM VGA"';
+                ctx.font = '32px "basis33"';
                 ctx.textAlign = 'center';
                 ctx.fillText('Click to start', 400, Math.round(300));
                 ctx.textAlign = 'start';
@@ -165,11 +165,12 @@ function disableSmoothing(ctx) {
 var loadDiv = document.getElementById('loading');
 
 var fontPromise = document.fonts && document.fonts.load
-    ? document.fonts.load('16px "PxPlus IBM VGA"').catch(function() {})
+    ? document.fonts.load('16px "basis33"').catch(function() {})
     : Promise.resolve();
 
 Promise.all([soundPlayer.loadAll(), fontPromise]).then(function() {
     if (loadDiv) loadDiv.style.display = 'none';
+    initFontSprites();
     gameCanvas.setup();
     disableSmoothing(gameCanvas.ctx);
     if (!topMenuBg) topMenuBg = createTopMenuBg();

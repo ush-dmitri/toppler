@@ -101,12 +101,12 @@ function createTopMenuBg() {
     ctx.fillStyle = '#55aaff';
     ctx.fillRect(0, 0, canvas.width, 60);
     ctx.fillStyle = '#000000';
-    ctx.font = '16px "PxPlus IBM VGA"';
+    ctx.font = '16px "basis33"';
     ctx.fillText('COINS:', 10, Math.round(34));
     var width = ctx.measureText('LIVES:').width;
     ctx.fillText('LIVES:', 360, Math.round(34));
     ctx.fillStyle = '#000000';
-    ctx.font = '16px "PxPlus IBM VGA"';
+    ctx.font = '16px "basis33"';
     width = ctx.measureText('POINTS:').width;
     ctx.fillText('POINTS:', 560, Math.round(34));
     ctx.fillStyle = '#cce6ff';
@@ -354,4 +354,161 @@ var bureaucratSprite = (function() {
     ctx.moveTo(50, 60); ctx.lineTo(50, 70); ctx.lineTo(58, 70); ctx.stroke();
     ctx.restore();
     return canvas;
+})();
+
+var fontSprites = {};
+var fontSpritesReady = false;
+var FONT_BASE_SIZE = 16;
+var FONT_SPRITE_SCALE = 3;
+var origFillText = CanvasRenderingContext2D.prototype.fillText;
+var origMeasureText = CanvasRenderingContext2D.prototype.measureText;
+var FONT_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789:'.!";
+
+function initFontSprites() {
+    var bigPx = FONT_BASE_SIZE * FONT_SPRITE_SCALE;
+    var mc = document.createElement('canvas');
+    var mctx = mc.getContext('2d');
+    mctx.font = bigPx + 'px "basis33"';
+
+    for (var ci = 0; ci < FONT_CHARS.length; ci++) {
+        var ch = FONT_CHARS[ci];
+        var charAdvance = mctx.measureText(ch).width;
+        var cw = Math.max(1, Math.ceil(charAdvance) + 2);
+        var chH = bigPx * 2;
+        var c = document.createElement('canvas');
+        c.width = cw;
+        c.height = chH;
+        var tc = c.getContext('2d');
+
+        tc.font = bigPx + 'px "basis33"';
+        tc.fillStyle = '#ffffff';
+        tc.textBaseline = 'alphabetic';
+        origFillText.call(tc, ch, 1, bigPx);
+
+        var id = tc.getImageData(0, 0, cw, chH);
+        var d = id.data;
+        for (var j = 3; j < d.length; j += 4) {
+            d[j] = d[j] > 127 ? 255 : 0;
+        }
+        tc.putImageData(id, 0, 0);
+
+        var sw = Math.max(1, Math.ceil(cw / FONT_SPRITE_SCALE));
+        var sh = Math.max(1, Math.ceil(chH / FONT_SPRITE_SCALE));
+        var sprite = document.createElement('canvas');
+        sprite.width = sw;
+        sprite.height = sh;
+        var stc = sprite.getContext('2d');
+        stc.imageSmoothingEnabled = false;
+        stc.drawImage(c, 0, 0, cw, chH, 0, 0, sw, sh);
+
+        fontSprites[ch] = {
+            canvas: sprite,
+            w: sw,
+            h: sh,
+            a: Math.round(charAdvance / FONT_SPRITE_SCALE)
+        };
+    }
+
+    fontSpritesReady = true;
+}
+
+(function() {
+    CanvasRenderingContext2D.prototype.fillText = function(text, x, y, maxWidth) {
+        if (!fontSpritesReady) return origFillText.call(this, text, x, y, maxWidth);
+
+        var fm = this.font.match(/(\d+)px/);
+        if (!fm) return origFillText.call(this, text, x, y, maxWidth);
+
+        var px = parseInt(fm[1], 10);
+        var sf = px / FONT_BASE_SIZE;
+
+        var chars = [];
+        var totalW = 0;
+        for (var i = 0; i < text.length; i++) {
+            var s = fontSprites[text[i]];
+            if (s) {
+                chars.push({ s: s, dw: Math.round(s.w * sf), dh: Math.round(s.h * sf), da: Math.round(s.a * sf) });
+                totalW += Math.round(s.a * sf);
+            } else {
+                chars.push(null);
+                totalW += Math.round(8 * sf);
+            }
+        }
+
+        if (totalW === 0 || chars.length === 0) return origFillText.call(this, text, x, y, maxWidth);
+
+        var charH = 0;
+        for (var i = 0; i < chars.length; i++) {
+            if (chars[i]) { charH = chars[i].dh; break; }
+        }
+        if (charH === 0) return origFillText.call(this, text, x, y, maxWidth);
+
+        var baselineOffset = Math.round(FONT_BASE_SIZE * sf);
+        var dy = Math.round(y - baselineOffset);
+
+        var ta = this.textAlign || 'start';
+        var dx = Math.round(x);
+        if (ta === 'center') dx = Math.round(x - totalW / 2);
+        else if (ta === 'end' || ta === 'right') dx = Math.round(x - totalW);
+
+        var color = this.fillStyle || '#ffffff';
+        var isWhite = color === '#ffffff' || color === 'white' || color === '#fff';
+
+        this.save();
+        disableSmoothing(this);
+
+        if (isWhite) {
+            var cpx = dx;
+            for (var i = 0; i < chars.length; i++) {
+                if (chars[i]) {
+                    this.drawImage(chars[i].s.canvas, cpx, dy, chars[i].dw, chars[i].dh);
+                    cpx += chars[i].da;
+                } else {
+                    cpx += Math.round(8 * sf);
+                }
+            }
+        } else {
+            var tmp = document.createElement('canvas');
+            tmp.width = totalW;
+            tmp.height = charH;
+            var ttc = tmp.getContext('2d');
+            disableSmoothing(ttc);
+
+            var cpx = 0;
+            for (var i = 0; i < chars.length; i++) {
+                if (chars[i]) {
+                    ttc.drawImage(chars[i].s.canvas, cpx, 0, chars[i].dw, chars[i].dh);
+                    cpx += chars[i].da;
+                } else {
+                    cpx += Math.round(8 * sf);
+                }
+            }
+
+            ttc.globalCompositeOperation = 'source-in';
+            ttc.fillStyle = color;
+            ttc.fillRect(0, 0, totalW, charH);
+
+            this.drawImage(tmp, dx, dy);
+        }
+
+        this.restore();
+    };
+
+    CanvasRenderingContext2D.prototype.measureText = function(text) {
+        if (!fontSpritesReady) return origMeasureText.call(this, text);
+
+        var fm = this.font.match(/(\d+)px/);
+        if (!fm) return origMeasureText.call(this, text);
+
+        var px = parseInt(fm[1], 10);
+        var sf = px / FONT_BASE_SIZE;
+
+        var totalW = 0;
+        for (var i = 0; i < text.length; i++) {
+            var s = fontSprites[text[i]];
+            totalW += s ? Math.round(s.a * sf) : Math.round(8 * sf);
+        }
+
+        return { width: totalW };
+    };
 })();

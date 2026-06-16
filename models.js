@@ -275,7 +275,7 @@ class Coin extends Drawable {
         var ctx = render.getContext('2d');
         disableSmoothing(ctx);
         ctx.drawImage(coin, 0, 0);
-        ctx.font = '16px "PxPlus IBM VGA"';
+        ctx.font = '16px "basis33"';
         var size = ctx.measureText(level);
         ctx.fillText(level, Math.round((render.width - size.width) >> 1), Math.round((render.height + 14) >> 1));
         return render;
@@ -618,7 +618,7 @@ class TopMenu extends Drawable {
             this.ctx.drawImage(playerDown, 380 + i * 25, -10);
         }
         this.ctx.fillStyle = '#aa0000';
-        this.ctx.font = '16px "PxPlus IBM VGA"';
+        this.ctx.font = '16px "basis33"';
         var width = this.ctx.measureText(String(gameState.points)).width;
         this.ctx.fillText(gameState.points, Math.round(680 - (width >> 1)), Math.round(34));
         this._rendered = true;
@@ -635,11 +635,11 @@ class SummaryScreen extends Drawable {
         this.ctx.fillStyle = '#ffaa55';
         this.ctx.fillRect(halfWidth - 180, 40, 360, 300);
         this.ctx.strokeRect(halfWidth - 180, 40, 360, 300);
-        this.ctx.font = '16px "PxPlus IBM VGA"';
+        this.ctx.font = '16px "basis33"';
         this.ctx.fillStyle = '#000000';
         var width = this.ctx.measureText('RESUME').width;
         this.ctx.fillText('RESUME', Math.round((this.canvas.width - width) >> 1), Math.round(80));
-        this.ctx.font = '16px "PxPlus IBM VGA"';
+        this.ctx.font = '16px "basis33"';
         this.ctx.fillText('POINTS:', Math.round(halfWidth - 100), Math.round(120));
         this.ctx.fillText(this.data.points, Math.round(halfWidth + 30), Math.round(120));
         this.ctx.fillText('TIME:', Math.round(halfWidth - 100), Math.round(150));
@@ -660,7 +660,7 @@ class SummaryScreen extends Drawable {
         this.ctx.fillText(this.data.balls.red, Math.round(((this.canvas.width - redW) >> 1) - 43), Math.round(225));
         this.ctx.fillText(this.data.balls.darkRed, Math.round(((this.canvas.width - darkRedW) >> 1) + 43), Math.round(225));
         this.ctx.fillText(this.data.balls.brown, Math.round(((this.canvas.width - brownW) >> 1) + 120), Math.round(225));
-        this.ctx.font = '16px "PxPlus IBM VGA"';
+        this.ctx.font = '16px "basis33"';
         width = this.ctx.measureText('Click to restart').width;
         this.ctx.fillText('Click to restart', Math.round((this.canvas.width - width) / 2), Math.round(280));
     }
